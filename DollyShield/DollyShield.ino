@@ -42,7 +42,7 @@
 #include "merlin_mount.h"
 
 
-#define FIRMWARE_VERSION  92
+#define FIRMWARE_VERSION  93
 
   // motor PWM
 #define MOTOR0_P 5
@@ -158,6 +158,7 @@ prog_char camera_menu_5[] PROGMEM = "Focus Tap ms";
 prog_char camera_menu_6[] PROGMEM = "Shutter+Focus";
 prog_char camera_menu_7[] PROGMEM = "Repeat";
 prog_char camera_menu_8[] PROGMEM = "Repeat Delay";
+prog_char camera_menu_9[] PROGMEM = "HDR Brackets";
 
 prog_char set_menu_1[] PROGMEM = "Motor Disp";
 prog_char set_menu_2[] PROGMEM = "Motor Sl.Mod";
@@ -189,13 +190,13 @@ PROGMEM const char *man_str[]   = { manual_menu_1, manual_menu_2, manual_menu_3 
 
 PROGMEM const char *axis0_str[] = { axis_menu_1, axis_menu_10, axis_menu_11, axis_menu_2, axis_menu_4, axis_menu_5, axis_menu_12, axis_menu_6, axis_menu_7, axis_menu_8 };
 PROGMEM const char *axis1_str[] = { axis_menu_1, axis_menu_10, axis_menu_11, axis_menu_2, axis_menu_4, axis_menu_5, axis_menu_12, axis_menu_6, axis_menu_7, axis_menu_8 };
-PROGMEM const char *cam_str[]   = { camera_menu_1, camera_menu_2, camera_menu_3, camera_menu_4, camera_menu_5, camera_menu_6, camera_menu_7, camera_menu_8 };
+PROGMEM const char *cam_str[]   = { camera_menu_1, camera_menu_2, camera_menu_3, camera_menu_4, camera_menu_5, camera_menu_6, camera_menu_7, camera_menu_8, camera_menu_9 };
 PROGMEM const char *set_str[]   = { set_menu_1, set_menu_2, set_menu_3, set_menu_4, set_menu_5, set_menu_6, set_menu_7, set_menu_8, set_menu_9, set_menu_10, set_menu_11, set_menu_12, set_menu_13, set_menu_14, set_menu_15, set_menu_16, set_menu_17 };
 PROGMEM const char *scope_str[] = { scope_menu_1, scope_menu_2 };
 
  // max number of inputs for each menu (in order listed above, starting w/ 0)
 
- byte max_menu[7]  = {5,2,9,9,7,16,1};
+ byte max_menu[7]  = {5,2,9,9,8,16,1};
 
  // support a history of menus visited up to 5 levels deep
 byte hist_menu[5] = {0,0,0,0,0};
@@ -214,6 +215,8 @@ byte cur_inp_pos   = 0;
   // input buffers
 unsigned long cur_inp_long  = 0;
 float cur_inp_float         = 0.0;
+unsigned int cur_inp_int    = 1;//umesh freelance
+unsigned int shots_bw_sms   = 0;//umesh freelance, shots between s.m.s
 boolean cur_inp_bool        = false;
 
   // which input are we on, if on
@@ -307,6 +310,13 @@ byte ui_type_flags = 0;
  
 byte ui_type_flags2 = 0;
 
+ /* input type flag 3
+
+   B0 = input value is an int (1 - 99) value
+
+ */
+
+byte ui_type_flags3 = 0;//umesh freelance
 
 
   /* run status flags
@@ -365,6 +375,8 @@ unsigned int cam_max  = 0;
 byte cam_repeat = 0;
   // delay between camera repeat cycles
 unsigned int cam_rpt_dly = 250;
+  // EDR Brackets - No. of exposures between dolly moves
+unsigned int cam_edr_brks = 1;//umesh freelance
 
 byte pre_focus_clear      = 0;
 unsigned long cam_last_tm = 0;
@@ -618,7 +630,7 @@ void main_loop_handler() {
   
     // run merlin in continuous mode if needed
     
-  if( motor_sl_mod && merlin_enabled ) {
+  if( motor_sl_mod && merlin_enabled && ( shots_bw_sms == cam_edr_brks ) ) {//umesh freelance
     merlin_run_cont();
     ok_stop = true; // allow max shots stop when
                     // in continuous mode
@@ -676,6 +688,7 @@ void main_loop_handler() {
       // the shot just fired
       camera_fired = false;
       shots++;
+      shots_bw_sms++;//umesh freelance
       
       
         // for ramping motor speeds
@@ -721,7 +734,8 @@ void main_loop_handler() {
     }
     
         // is the merlin head set to move?    
-    if( motors_clear == true && merlin_enabled  && ! motor_sl_mod ) {
+    if( motors_clear == true && merlin_enabled  && ! motor_sl_mod &&
+         ( shots_bw_sms == cam_edr_brks ) ) {//umesh freelance
         // send merlin head to move sms distances (if desired)             
   
       if( merlin_speeds[0] > 0.0 ) {        
@@ -751,12 +765,16 @@ void main_loop_handler() {
     
   } 
   else if( motors_clear == true && ! motor_sl_mod &&
-              ( m_sms_tm[0] > 0 || m_sms_tm[1] > 0 ) ) {
+              ( m_sms_tm[0] > 0 || m_sms_tm[1] > 0 ) &&
+              ( shots_bw_sms == cam_edr_brks ) ) {
       
        // if we're set to go to s-m-s and at least one motor is set to move
       // start DC motor(s) moving
   
       motor_ran = 0;
+
+      //reinit shots_bw_sms for next round
+      shots_bw_sms = 0;//umesh freelance
   
         // set motors to move, and then
         // set timer to turn them off  

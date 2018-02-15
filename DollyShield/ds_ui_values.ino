@@ -100,6 +100,17 @@ void move_val(boolean dir) {
 
     cur_inp_bool = ! cur_inp_bool;
   }
+  else if( ui_type_flags3 & B10000000 ) {//umesh freelance
+      // any int type
+    if( 99 == cur_inp_int && true == dir )
+        cur_inp_int = 1;
+    else if ( 1 == cur_inp_int && false == dir ) 
+        cur_inp_int = 99;
+    else if ( true == dir )
+        cur_inp_int++;
+    else if ( false == dir )
+        cur_inp_int--;
+  }
   else {
     
       // unsigned long type
@@ -269,6 +280,7 @@ void get_m_cam_set( byte pos, boolean read_save ) {
 
     // reset this flag
   ui_float_tenths = false;
+  ui_type_flags3  = 0;//umesh freelance
   
   
   switch(pos) {
@@ -341,6 +353,19 @@ void get_m_cam_set( byte pos, boolean read_save ) {
         eeprom_write(250, cam_rpt_dly);
       }
       cur_inp_long = cam_rpt_dly;
+      break;
+  case 8://umesh freelance
+      // EDR Brackets
+        
+      ui_type_flags3 |= B10000000;
+      
+      if( read_save == true ) { 
+        cam_edr_brks = cur_inp_int;
+        shots_bw_sms = 0;//reinit when saving EDR Brackets
+        eeprom_write(267, cam_edr_brks);
+      }
+      cur_inp_int = cam_edr_brks;
+      shots_bw_sms = 0;
       break;
   }
 }
@@ -640,6 +665,7 @@ void get_mainscr_set(byte pos, boolean read_save) {
      
   ui_type_flags   = 0;
   ui_type_flags2  = 0;
+  ui_type_flags3  = 0;//umesh freelance
   ui_float_tenths = false;
 
   if( merlin_flags & B00010000 ) {

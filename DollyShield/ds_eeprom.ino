@@ -97,6 +97,7 @@
  gb_enabled     = 264
  ui_invdir      = 265
  cur_bkl        = 266
+ cam_edr_brks   = 267 umesh freelance
  
 */
 
@@ -271,6 +272,7 @@ void write_all_eeprom_memory() {
   eeprom_write(264, gb_enabled);
   eeprom_write(265, ui_invdir);
   eeprom_write(266, cur_bkl);
+  eeprom_write(267, cam_edr_brks);//umesh freelance
   
 }
 
@@ -349,6 +351,7 @@ void restore_eeprom_memory() {
   eeprom_read(264, gb_enabled);
   eeprom_read(265, ui_invdir);
   eeprom_read(266, cur_bkl);
+  eeprom_read(267, cam_edr_brks);//umesh freelance
   
     // handle restoring alt input states
     

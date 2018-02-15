@@ -59,7 +59,7 @@ void init_user_interface() {
  lcd.setCursor(0,0); 
  lcd.print("MX2 Dolly Engine");
  lcd.setCursor(3,1);
- lcd.print("Version 0.92");
+ lcd.print("Version 0.93");
  
    // setup button input
 
@@ -934,6 +934,12 @@ void draw_values(const char *these[], boolean draw_all, boolean value_only) {
           // cal speed inputs in gobal set menu
         display_spd_ipm(cur_inp_long, 0);
         return;
+      }
+
+      //umesh freelance
+      if( ui_type_flags3 & B10000000 ) {
+          lcd.print(cur_inp_int, DEC);
+          return;
       }
       
       switch(ui_type_flags) {
